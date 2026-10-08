@@ -1,0 +1,40 @@
+# Omada Network Application, built from TP-Link's official 6.3.0.45 linux_x64 tarball.
+#
+# SECURITY: host networking binds the controller's ports (8088, 8043, 8843, 8044, 19810/udp,
+# 27001/udp, 29810/udp, 29811-29817) directly on the host. Restrict them to your LAN with a
+# host firewall; never expose them to the public Internet (see README).
+services:
+  omada-controller:
+    image: omada-controller:6.3.0.45
+    build:
+      context: .
+      args:
+        INSTALL_VER: "6.3.0.45"
+    platform: linux/amd64
+    container_name: omada-controller
+    # Required for L2 broadcast discovery/adoption of Omada devices on the LAN.
+    network_mode: host
+    restart: unless-stopped
+    # control.sh stop waits up to 30s (+30s after a kill); MongoDB must close cleanly.
+    # Measured ~94s for a full stop under x86 emulation, so allow generously.
+    stop_grace_period: 120s
+    # jsvc drops to the 'omada' user and needs these two capabilities, which Docker removes
+    # by default (without them: "set_caps(CAPS) failed for user 'omada'").
+    cap_add:
+      - DAC_READ_SEARCH
+      - SYS_TTY_CONFIG
+    environment:
+      TZ: "${TZ:-UTC}"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - omada-data:/opt/tplink/EAPController/data
+      - omada-logs:/opt/tplink/EAPController/logs
+
+volumes:
+  omada-data:
+    name: omada-data
+  omada-logs:
+    name: omada-logs

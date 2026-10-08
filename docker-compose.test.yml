@@ -1,0 +1,36 @@
+# Side-by-side test compose. Does NOT use host networking, so it can run
+# next to a live controller. Device discovery/adoption will not work.
+# Production ports stay with the existing mbentley 5.15 container.
+services:
+  omada-controller:
+    image: omada-controller:6.3.0.45
+    build:
+      context: .
+      args:
+        INSTALL_VER: "6.3.0.45"
+    platform: linux/amd64
+    container_name: omada-controller-test
+    restart: unless-stopped
+    stop_grace_period: 120s
+    cap_add:
+      - DAC_READ_SEARCH
+      - SYS_TTY_CONFIG
+    environment:
+      TZ: "${TZ:-Asia/Kolkata}"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "18088:8088"
+      - "18043:8043"
+      - "18843:8843"
+    volumes:
+      - omada-test-data:/opt/tplink/EAPController/data
+      - omada-test-logs:/opt/tplink/EAPController/logs
+
+volumes:
+  omada-test-data:
+    name: omada-test-data
+  omada-test-logs:
+    name: omada-test-logs

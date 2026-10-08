@@ -1,0 +1,4 @@
+backups/
+vendor/*.tar.gz
+vendor/extracted/
+.env
